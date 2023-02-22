@@ -9,6 +9,7 @@ export default function Home() {
   // const [isFilePicked, setIsFilePicked] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [predictedValue, setpredictedValue] = useState('');
 
   const changeHandler = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -47,15 +48,12 @@ export default function Home() {
     const formData = new FormData();
     formData.append('image', selectedFile);
 
-    // Send the GET request with the FormData as a query parameter
-    // fetch(`/api/predict?${new URLSearchParams(formData).toString()}`)
-    //   // .then(response => response.json())
-    //   .then(data => console.log(data))
-    //   .catch(error => console.error(error));
+
 
     const response=  await fetch ('http://localhost:5000/predict', {method:'POST', body: formData});
     const data = await response.json();
     setImageUrl(data.url); 
+    setpredictedValue(data.prediction);
   };
 
   // handle drag events
@@ -159,12 +157,14 @@ export default function Home() {
               Submit
             </button>
             {imageUrl && <img src={`http://localhost:5000/${imageUrl}`} alt="Uploaded image" />}
-              {console.log(imageUrl)}
+              {console.log(imageUrl, predictedValue)}
+              {predictedValue? predictedValue : "prediction not returned"}
           </form>
         </div>
 
         
       </div>
+      
       <div className="w-full text-center">
         <hr className="h-6" />
         <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-8 rounded my-4" onClick={onDownloadTemplateClick}>
