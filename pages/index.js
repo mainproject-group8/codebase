@@ -1,12 +1,14 @@
 import Head from "next/head";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import AnswerList from "../components/Answer";
+
 
 export default function Home() {
   // -------------------------------------
   const [selectedFile, setSelectedFile] = useState();
-  const [isFilePicked, setIsFilePicked] = useState(false);
+  // const [isFilePicked, setIsFilePicked] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
 
   const changeHandler = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -16,7 +18,7 @@ export default function Home() {
   // Function will execute on click of button
   const onDownloadTemplateClick = () => {
     // using Java Script method to get PDF file
-    fetch('SamplePDF.pdf').then(response => {
+    fetch('samplePDF.pdf').then(response => {
         response.blob().then(blob => {
             // Creating new object of PDF file
             const fileURL = window.URL.createObjectURL(blob);
@@ -35,6 +37,26 @@ export default function Home() {
   const [dragActive, setDragActive] = useState(false);
   // ref
   const inputRef = useRef(null);
+
+
+
+  const handleSubmit = async(event)=> {
+
+    event.preventDefault();
+    // Create a FormData object and append the file
+    const formData = new FormData();
+    formData.append('image', selectedFile);
+
+    // Send the GET request with the FormData as a query parameter
+    // fetch(`/api/predict?${new URLSearchParams(formData).toString()}`)
+    //   // .then(response => response.json())
+    //   .then(data => console.log(data))
+    //   .catch(error => console.error(error));
+
+    const response=  await fetch ('http://localhost:5000/predict', {method:'POST', body: formData});
+    const data = await response.json();
+    setImageUrl(data.url); 
+  };
 
   // handle drag events
   const handleDrag = function (e) {
@@ -110,9 +132,9 @@ export default function Home() {
 
         <div className="mt-8">
           <h2>Upload</h2>
-          <form id="form-file-upload">
+          <form id="form-file-upload" onSubmit={handleSubmit}>
 
-            {/* {dragActive && (
+            {dragActive && (
               <div
                 id="drag-file-element"
                 onDragEnter={handleDrag}
@@ -120,27 +142,28 @@ export default function Home() {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               ></div>
-            )} */}
+            )}
+
             <input type="file" name="file" onChange={changeHandler} />
             {isSelected ? (
               <div>
                 <p>Filename: {selectedFile.name}</p>
                 <p>Filetype: {selectedFile.type}</p>
                 <p>Size in bytes: {selectedFile.size}</p>
-                <p>
-                  lastModifiedDate:{' '}
-                  {selectedFile.lastModifiedDate.toLocaleDateString()}
-                </p>
               </div>
             ) : (
               <p>Select a file to show details</p>
             )}
+
+            <button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded my-4">
+              Submit
+            </button>
+            {imageUrl && <img src={`http://localhost:5000/${imageUrl}`} alt="Uploaded image" />}
+              {console.log(imageUrl)}
           </form>
         </div>
 
-        <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded my-4">
-          Evaluate Answer Sheets
-        </button>
+        
       </div>
       <div className="w-full text-center">
         <hr className="h-6" />
