@@ -3,7 +3,7 @@ import uuid
 import tensorflow as tf
 import numpy as np
 from flask import Flask, request, jsonify, send_file, send_from_directory
-from tensorflow.keras.preprocessing.image import load_img, save_img, img_to_array, array_to_img
+# from tensorflow.keras.preprocessing.image import load_img, save_img, img_to_array, array_to_img
 from flask_cors import CORS
 from PIL import Image
 

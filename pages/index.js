@@ -1,6 +1,7 @@
 import Head from "next/head";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import AnswerList from "../components/Answer";
+import Guide from "../components/Guide";
 
 
 export default function Home() {
@@ -10,6 +11,7 @@ export default function Home() {
   const [isSelected, setIsSelected] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [predictedValue, setpredictedValue] = useState('');
+  const [answerArray, setAnswerArray] = useState([])
 
   const changeHandler = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -36,8 +38,7 @@ export default function Home() {
 
   // drag state
   const [dragActive, setDragActive] = useState(false);
-  // ref
-  const inputRef = useRef(null);
+
 
 
 
@@ -78,20 +79,24 @@ export default function Home() {
   };
 
   // triggers when file is selected with click
-  const handleChange = function (e) {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      // handleFiles(e.target.files);
-    }
-  };
+  // const handleChange = function (e) {
+  //   e.preventDefault();
+  //   if (e.target.files && e.target.files[0]) {
+  //     // handleFiles(e.target.files);
+  //   }
+  // };
 
   // triggers the input when the button is clicked
-  const onButtonClick = () => {
-    inputRef.current.click();
-  };
+  // const onButtonClick = () => {
+  //   inputRef.current.click();
+  // };
 
-  const handleClick = () => {
-    console.log("Uploaded")
+  // const handleClick = () => {
+  //   console.log("Uploaded")
+  // }
+
+  const getAnswersArray=(arr)=>{
+    setAnswerArray(arr)
   }
 
   return (
@@ -100,25 +105,7 @@ export default function Home() {
         <title>51 Letters</title>
       </Head>
       <div className="m-8 w-1/3">
-        <b>Guide:</b>
-        <ol className="ml-6">
-          <li>Download the following template.</li>
-          <li>
-            Take the print out of the answer template. It is in this template
-            the students are supposed to write the answers.
-          </li>
-          <li>
-            Enter the words for spelling test under “Answers” heading and press
-            “Submit”.
-          </li>
-          <li>Scan the answer sheet(s).</li>
-          <li>Upload the scanned answer sheet(s).</li>
-          <li>
-            Press “Evaluate” and download the generated .xls file which contains
-            the individual score for each question and also total score for each
-            scanned paper.
-          </li>
-        </ol>
+         <Guide />
 
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-4" onClick={onDownloadTemplateClick}>
           Download Answer Template 
@@ -126,7 +113,8 @@ export default function Home() {
 
         <h3 >Answers</h3>
 
-        <AnswerList />
+        <AnswerList callbackFn={getAnswersArray} />
+
 
         <div className="mt-8">
           <h2>Upload</h2>
@@ -154,12 +142,19 @@ export default function Home() {
             )}
 
             <button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded my-4">
-              Submit
+              Predict
             </button>
             {imageUrl && <img src={`http://localhost:5000/${imageUrl}`} alt="Uploaded image" />}
-              {console.log(imageUrl, predictedValue)}
+              {console.log(imageUrl, predictedValue, answerArray)}
+              { console.log(`The length of ${answerArray[0]} is ${answerArray[0].length}`)}
+              { console.log(`The length of ${answerArray[1]} is ${answerArray[1].length}`)}
+
               {predictedValue? predictedValue : "prediction not returned"}
+            
           </form>
+
+   
+  
         </div>
 
         

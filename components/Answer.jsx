@@ -1,39 +1,35 @@
-import React from 'react'
+import {useState} from 'react'
 
-class AnswerList extends React.Component {
-  state = {
-    answers: ['പറ', 'ആമ'],
-    newAnswer: ''
+const AnswerList = ({callbackFn}) =>  {
+  const [answers,setAnswers] = useState(['പറ', 'ആമ'])
+  const [newAnswer,setNewAnswer] = useState('')
+
+  const handleChange = event => {
+    setNewAnswer(event.target.value)
   }
 
-  handleChange = event => {
-    this.setState({ newAnswer: event.target.value })
-  }
-
-  handleSubmit = event => {
+  const handleSubmit = event => {
     event.preventDefault()
-    this.setState({
-      answers: [...this.state.answers, this.state.newAnswer],
-      newAnswer: ''
-    })
+    setAnswers([...answers, newAnswer])
+    setNewAnswer('')
   }
 
-  handleRemove = index => {
-    this.setState({
-      answers: this.state.answers.filter((answer, i) => i !== index)
-    })
+  const handleRemove = index => {
+    setAnswers(answers.filter((answer, i) => i !== index))
+
   }
 
-  render() {
+
     return (
       <div id='answer-border'>
-        <form onSubmit={this.handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <input
               type="text"
+              placeholder='type here..'
               className='rounded px-2 mx-2 py-1'
-              value={this.state.newAnswer}
-              onChange={this.handleChange}
-              style={{ backgroundColor: 'white', color:'black' }}
+              value={newAnswer}
+              onChange={handleChange}
+              style={{ backgroundColor: 'lightgrey', color:'black' }}
             />
           <button
             type="submit"
@@ -44,11 +40,11 @@ class AnswerList extends React.Component {
           </button>
         </form>
         <ul>
-          {this.state.answers.map((answer, index) => (
+          {answers.map((answer, index) => (
             <li key={answer} style={{ margin: '0.5rem', padding: '0.5rem' }}>
               {answer}
               <button
-                onClick={() => this.handleRemove(index)}
+                onClick={() => handleRemove(index)}
                 className="bg-red-500 hover:bg-red-600 rounded px-2 mx-2 py-1"
                 style={{ margin: '0.5rem' }}
               >
@@ -58,14 +54,17 @@ class AnswerList extends React.Component {
           ))}
         </ul>
         <button
-                className="bg-sky-800 hover:bg-sky-700 shadow-lg rounded px-2 py-1 mx-2"
+        onClick={()=>{
+         callbackFn(answers)
+        }}
+                className="bg-sky-600 white hover:bg-sky-300 shadow-lg rounded px-2 py-1 mx-2"
                 style={{ margin: '0.5rem' }}
               >
                 Submit
               </button>
       </div>
     )
-  }
+  
 }
 
 export default AnswerList
