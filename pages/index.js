@@ -21,16 +21,16 @@ export default function Home() {
   // Function will execute on click of button
   const onDownloadTemplateClick = () => {
     // using Java Script method to get PDF file
-    fetch('samplePDF.pdf').then(response => {
-        response.blob().then(blob => {
-            // Creating new object of PDF file
-            const fileURL = window.URL.createObjectURL(blob);
-            // Setting various property values
-            let alink = document.createElement('a');
-            alink.href = fileURL;
-            alink.download = 'SamplePDF.pdf';
-            alink.click();
-        })
+    fetch('template.jpg').then(response => {
+      response.blob().then(blob => {
+        // Creating new object of PDF file
+        const fileURL = window.URL.createObjectURL(blob);
+        // Setting various property values
+        let alink = document.createElement('a');
+        alink.href = fileURL;
+        alink.download = 'template.jpg';
+        alink.click();
+      })
     })
   }
   // ---------------------------------------
@@ -42,7 +42,7 @@ export default function Home() {
 
 
 
-  const handleSubmit = async(event)=> {
+  const handleSubmit = async (event) => {
 
     event.preventDefault();
     // Create a FormData object and append the file
@@ -51,9 +51,9 @@ export default function Home() {
 
 
 
-    const response=  await fetch ('http://localhost:5000/predict', {method:'POST', body: formData});
+    const response = await fetch('http://localhost:5000/predict', { method: 'POST', body: formData });
     const data = await response.json();
-    setImageUrl(data.url); 
+    setImageUrl(data.url);
     setpredictedValue(data.prediction);
   };
 
@@ -95,7 +95,7 @@ export default function Home() {
   //   console.log("Uploaded")
   // }
 
-  const getAnswersArray=(arr)=>{
+  const getAnswersArray = (arr) => {
     setAnswerArray(arr)
   }
 
@@ -105,10 +105,10 @@ export default function Home() {
         <title>51 Letters</title>
       </Head>
       <div className="m-8 w-1/3">
-         <Guide />
+        <Guide />
 
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-4" onClick={onDownloadTemplateClick}>
-          Download Answer Template 
+          Download Answer Template
         </button>
 
         <h3 >Answers</h3>
@@ -145,21 +145,21 @@ export default function Home() {
               Predict
             </button>
             {imageUrl && <img src={`http://localhost:5000/${imageUrl}`} alt="Uploaded image" />}
-              {console.log(imageUrl, predictedValue, answerArray)}
-              { console.log(`The length of ${answerArray[0]} is ${answerArray[0].length}`)}
-              { console.log(`The length of ${answerArray[1]} is ${answerArray[1].length}`)}
+            {/*console.log(imageUrl, predictedValue, answerArray)*/}
+            {/* console.log(`The length of ${answerArray[0]} is ${answerArray[0].length}`)}
+              { console.log(`The length of ${answerArray[1]} is ${answerArray[1].length}`)*/}
 
-              {predictedValue? predictedValue : "prediction not returned"}
-            
+            {predictedValue ? predictedValue : "prediction not returned"}
+
           </form>
 
-   
-  
+
+
         </div>
 
-        
+
       </div>
-      
+
       <div className="w-full text-center">
         <hr className="h-6" />
         <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-8 rounded my-4" onClick={onDownloadTemplateClick}>
