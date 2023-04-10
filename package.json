@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "server": "cd pages/api && python server.py"
   },
   "dependencies": {
     "@next/font": "13.1.1",
+    "axios": "^1.3.5",
     "eslint": "8.30.0",
     "eslint-config-next": "^12.0.4",
     "next": "^13.1.1",
