@@ -65,7 +65,7 @@ def upload():
         x, y, w, h = cv2.boundingRect(cnt)
         square_region = gray[y+20:y+h-20, x+20:x+w-20]
         # square_region= cv2.convertScaleAbs(square_region, alpha=2)
-        th, square_region= cv2.threshold(square_region, 205, 255, cv2.THRESH_BINARY);
+        th, square_region= cv2.threshold(square_region, 200, 255, cv2.THRESH_BINARY);
         cv2.imwrite(os.path.join(UPLOAD_FOLDER,'cropped'+str(x)+str(y)+'.jpg'), square_region)
 
     # cv2.waitKey(0)
