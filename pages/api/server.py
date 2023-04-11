@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify, send_file, send_from_directory
 from tensorflow.keras.preprocessing.image import load_img, save_img, img_to_array, array_to_img
 from flask_cors import CORS
 import cv2
+from charEncode import character_dictionary
 
 app = Flask(__name__)
 CORS(app)
@@ -70,18 +71,14 @@ def upload():
     t_g = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 
 
-    for f in os.scandir(os.path.join(ANSWERSHEET_PATH,"letters")):
+    for f in os.scandir(UPLOAD_FOLDER):
         img=load_img(f.path, target_size=(128,128))
         img_tensor = img_to_array(img)
         img_batch = np.expand_dims(img_tensor, axis=0)
         augmented_img = t_g.flow(img_batch)
-        prediction=model.predict(augmented_img)
-        print(f.name,"--------->",np.argmax(prediction,axis=-1))
-    
-
-
-
-
+        prediction=np.argmax(model.predict(augmented_img),axis=-1)
+        os.rename(f.path,os.path.join(UPLOAD_FOLDER,character_dictionary[prediction[0]]+".jpg"))
+        print(f.name,"--------->",prediction)
 
 
     t_gen = t_g.flow_from_directory(os.path.join(os.path.dirname(__file__),'../..'), classes=['images'], class_mode=None, shuffle=False, target_size=(128, 128))
