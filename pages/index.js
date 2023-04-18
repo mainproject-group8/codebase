@@ -56,11 +56,7 @@ export default function Home() {
         console.log(data);
         setIsProcessing(false);
         setImageUrl(data.data.url);
-        let new_arr = [];
-        for (let i = 0; i < data.data.prediction.length; i++) {
-          new_arr.push(dictionary[data.data.prediction[i]]);
-        }
-        setpredictedValue(new_arr);
+        setpredictedValue(data.data.prediction);
       });
   };
 
@@ -169,7 +165,6 @@ export default function Home() {
           ""
         )}
       </div>
-
       <div className="w-full text-center">
         <hr className="h-6" />
         <button

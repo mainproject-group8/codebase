@@ -1,3 +1,4 @@
+from math import floor
 import os
 import numpy as np
 import tensorflow as tf
@@ -31,8 +32,9 @@ def upload():
     # fileName = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
     # Load image and convert to grayscale
-    img = cv2.imread('camscan.jpg')
+    img = cv2.imread(os.path.join(ANSWERSHEET_PATH, 'img.jpeg'))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # th, gray= cv2.threshold(gray, 190, 255, cv2.THRESH_BINARY);
     
 
     # Apply thresholding to segment the image
@@ -54,14 +56,39 @@ def upload():
     # Sort squares from left to right
     squares = sorted(squares, key=lambda cnt: cv2.boundingRect(cnt)[0])
 
+    for f in os.scandir(UPLOAD_FOLDER):
+        os.remove(f)
+
     # Extract square regions from image
+    pos=[]
     for i, cnt in enumerate(squares):
         x, y, w, h = cv2.boundingRect(cnt)
         square_region = gray[y+20:y+h-20, x+20:x+w-20]
         # square_region= cv2.convertScaleAbs(square_region, alpha=2)
+        
+        pos.append([y,x])
+        print(str(x)+"----"+str(y))
         th, square_region= cv2.threshold(square_region, 200, 255, cv2.THRESH_BINARY);
-        cv2.imwrite(os.path.join(UPLOAD_FOLDER,'cropped'+str(x)+str(y)+'.jpg'), square_region)
+        if np.sum(square_region==0)>100:
+            cv2.imwrite(os.path.join(UPLOAD_FOLDER,str(x)+"_"+str(y)+'.jpg'), square_region)
     
+    pos.sort()
+    newpos=[]
+    for i in range(5):
+        subarr=[]
+        for j in range(4):
+            subarr.append(pos[i*4+j][::-1])
+        subarr.sort()
+        newpos.append(subarr)
+    
+    count=0
+    for position in newpos:
+        for k in position:
+            old_name = os.path.join(UPLOAD_FOLDER,str(str(k[0])+"_"+str(k[1])+'.jpg'))
+            if os.path.exists(old_name):
+                os.rename(old_name,os.path.join(UPLOAD_FOLDER,str(count)+".jpg"))
+            count+=1
+
 
     # Save the image to disk
     #image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -70,27 +97,30 @@ def upload():
 
     t_g = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 
-
+    predictions=["","","","",""]
     for f in os.scandir(UPLOAD_FOLDER):
         img=load_img(f.path, target_size=(128,128))
         img_tensor = img_to_array(img)
         img_batch = np.expand_dims(img_tensor, axis=0)
         augmented_img = t_g.flow(img_batch)
         prediction=np.argmax(model.predict(augmented_img),axis=-1)
-        os.rename(f.path,os.path.join(UPLOAD_FOLDER,character_dictionary[prediction[0]]+".jpg"))
-        print(f.name,"--------->",prediction)
+        slno=int(f.name.split(".")[0])
+        predictions[slno//4]+=character_dictionary[prediction[0]]
+    print(predictions)
 
 
-    t_gen = t_g.flow_from_directory(os.path.join(os.path.dirname(__file__),'../..'), classes=['images'], class_mode=None, shuffle=False, target_size=(128, 128))
 
-    preds = model.predict(t_gen)
-    preds_cls_idx = preds.argmax(axis=-1)
+
+    # t_gen = t_g.flow_from_directory(os.path.join(os.path.dirname(__file__),'../..'), classes=['images'], class_mode=None, shuffle=False, target_size=(128, 128))
+
+    # preds = model.predict(t_gen)
+    # preds_cls_idx = preds.argmax(axis=-1)
 
 
     # Return the URL of the saved image as a JSON response
     # Convert the prediction to a string and send it back as a JSON response
     return jsonify({'url': os.path.join(os.path.dirname(__file__),'../../images/answersheet.jpeg'),
-                    'prediction': preds_cls_idx.tolist()})
+                    'prediction': predictions})
 
 # Define a Flask endpoint for serving uploaded images
 @app.route('/images/<path:filename>')
