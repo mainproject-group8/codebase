@@ -3,83 +3,100 @@ import { useState, useRef } from "react";
 import AnswerList from "../components/Answer";
 import Guide from "../components/Guide";
 import axios from "axios";
+import { CSVLink } from "react-csv";
 import dictionary from "./charEncode";
+import TemplateDownload from "../components/TemplateDownload";
 
+const headers = [
+  { label: "File Name", key: "filename" },
+  { label: "Score", key: "score" },
+];
+
+let scoreData = [];
 export default function Home() {
   // -------------------------------------
-  const [selectedFile, setSelectedFile] = useState();
+  const [selectedFiles, setselectedFiles] = useState([]);
   const [isSelected, setIsSelected] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [dragActive, setDragActive] = useState(false);
-  const [predictedValue, setpredictedValue] = useState("");
+  const [predictedValue, setpredictedValue] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [answerArray, setAnswerArray] = useState([]);
+  const [score, setScore] = useState([]);
+  const [scoreData, setScoreData] = useState([]);
 
   const changeHandler = (event) => {
-    setSelectedFile(event.target.files[0]);
+    setselectedFiles(event.target.files);
     setIsSelected(true);
   };
 
-  // Function will execute on click of button
-  const onDownloadTemplateClick = () => {
-    // using Java Script method to get PDF file
-    fetch("template.jpg").then((response) => {
-      response.blob().then((blob) => {
-        // Creating new object of PDF file
-        const fileURL = window.URL.createObjectURL(blob);
-        // Setting various property values
-        let alink = document.createElement("a");
-        alink.href = fileURL;
-        alink.download = "template.jpg";
-        alink.click();
-      });
-    });
-  };
-  // ---------------------------------------
-
-  // drag state
-
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // Create a FormData object and append the file
-    const formData = new FormData();
-    if (isSelected) {
-      formData.append("image", selectedFile);
-    }
+    setpredictedValue([]);
     setIsProcessing(true);
-    // const response = await fetch('http://localhost:5000/predict', { method: 'POST', body: formData });
-    axios
-      .post("http://localhost:5000/predict", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((data) => {
-        console.log(data);
-        setIsProcessing(false);
-        setImageUrl(data.data.url);
-        setpredictedValue(data.data.prediction);
-      });
-  };
+    setScoreData([]);
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const formData = new FormData();
+      if (isSelected) {
+        formData.append("image", selectedFiles[i]);
+      }
+      await axios
+        .post("http://localhost:5000/predict", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+        .then((data) => {
+          console.log(data);
+          // setImageUrl(data.data.url);
+          let predictedAnswers = data.data.prediction;
+          setpredictedValue(predictedAnswers);
 
-  // handle drag events
-  const handleDrag = function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+          let maxScore = predictedAnswers.length;
+          let totalScore = 0;
+
+          for (let i = 0; i < maxScore; i++) {
+            if (predictedAnswers[i] == answerArray[i]) {
+              totalScore += 1;
+            }
+          }
+
+          console.log({
+            pred: predictedAnswers,
+            ans: answerArray,
+            filename: selectedFiles[i].name,
+            score: totalScore,
+          });
+
+          let scoreObject = {
+            filename: selectedFiles[i].name,
+            score: totalScore,
+          };
+          setScoreData((prevState) => [...prevState, scoreObject]);
+          setScore([...score, totalScore]);
+          setIsProcessing(false);
+        });
     }
   };
 
-  // triggers when file is dropped
-  const handleDrop = function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      // handleFiles(e.dataTransfer.files);
-    }
-  };
+  // // handle drag events
+  // const handleDrag = function (e) {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   if (e.type === "dragenter" || e.type === "dragover") {
+  //     setDragActive(true);
+  //   } else if (e.type === "dragleave") {
+  //     setDragActive(false);
+  //   }
+  // };
+
+  // // triggers when file is dropped
+  // const handleDrop = function (e) {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   setDragActive(false);
+  //   if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+  //     // handleFiles(e.dataTransfer.files);
+  //   }
+  // };
 
   // triggers when file is selected with click
   // const handleChange = function (e) {
@@ -109,37 +126,19 @@ export default function Home() {
       </Head>
       <div className="m-8 w-1/3">
         <Guide />
-
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-4"
-          onClick={onDownloadTemplateClick}
-        >
-          Download Answer Template
-        </button>
-
-        <h3>Answers</h3>
-
+        <TemplateDownload />
         <AnswerList callbackFn={getAnswersArray} />
 
         <div className="mt-8">
-          <h2>Upload</h2>
+          <h2>
+            <strong>Upload</strong>
+          </h2>
           <form id="form-file-upload" onSubmit={handleSubmit}>
-            {dragActive && (
-              <div
-                id="drag-file-element"
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              ></div>
-            )}
-
-            <input type="file" name="image" onChange={changeHandler} />
+            <input type="file" multiple name="image" onChange={changeHandler} />
             {isSelected ? (
               <div>
-                <p>Filename: {selectedFile.name}</p>
-                <p>Filetype: {selectedFile.type}</p>
-                <p>Size in bytes: {selectedFile.size}</p>
+                {/* <p>Filename: {selectedFiles.name}</p>
+                <p>Filetype: {selectedFiles.type}</p> */}
               </div>
             ) : (
               <p>Select a file to show details</p>
@@ -148,30 +147,54 @@ export default function Home() {
               type="submit"
               className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded my-4"
             >
-              Predict
+              Calculate Score
             </button>
           </form>
         </div>
-        {isProcessing ? (
-          <h2>
-            Predicted value :{" "}
-            <span>
-              <img src="/Gear.gif" />
-            </span>
-          </h2>
-        ) : predictedValue ? (
-          <h2>Predicted value : {predictedValue}</h2>
-        ) : (
-          ""
-        )}
+
+        <div>
+          {isProcessing ? (
+            <>
+              <h2>SCORES</h2>
+              <img src="Gear.gif"></img>
+            </>
+          ) : scoreData.length == 0 ? (
+            <></>
+          ) : (
+            <>
+              <h2>SCORES</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Filename</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scoreData.map((scoreItem, i) => {
+                    return (
+                      <tr key={i}>
+                        <td>{scoreItem.filename}</td>
+                        <td>{scoreItem.score}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
       </div>
       <div className="w-full text-center">
         <hr className="h-6" />
         <button
+          disabled={score}
           className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-8 rounded my-4"
-          onClick={onDownloadTemplateClick}
+          onClick={() => {}}
         >
-          Download Result
+          <CSVLink data={scoreData} headers={headers} filename="score-card.csv">
+            Download Result
+          </CSVLink>
         </button>
       </div>
     </>

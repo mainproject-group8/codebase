@@ -26,7 +26,6 @@ def upload():
     # Generate a unique filename for the uploaded image
     
     image_file.save(os.path.join(ANSWERSHEET_PATH, 'img.jpeg'))
-
     
     # print("Running cropping.py")
     # fileName = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -43,7 +42,6 @@ def upload():
     edged = cv2.Canny(thresh, 30, 200)
     # Find contours in the image
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
     # Filter contours to find squares
     squares = []
     for cnt in contours:
@@ -56,8 +54,6 @@ def upload():
     # Sort squares from left to right
     squares = sorted(squares, key=lambda cnt: cv2.boundingRect(cnt)[0])
 
-    for f in os.scandir(UPLOAD_FOLDER):
-        os.remove(f)
 
     # Extract square regions from image
     pos=[]
@@ -67,9 +63,8 @@ def upload():
         # square_region= cv2.convertScaleAbs(square_region, alpha=2)
         
         pos.append([y,x])
-        print(str(x)+"----"+str(y))
         th, square_region= cv2.threshold(square_region, 200, 255, cv2.THRESH_BINARY);
-        if np.sum(square_region==0)>100:
+        if np.sum(square_region==0)>600:
             cv2.imwrite(os.path.join(UPLOAD_FOLDER,str(x)+"_"+str(y)+'.jpg'), square_region)
     
     pos.sort()
@@ -98,17 +93,32 @@ def upload():
     t_g = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 
     predictions=["","","","",""]
-    for f in os.scandir(UPLOAD_FOLDER):
-        img=load_img(f.path, target_size=(128,128))
-        img_tensor = img_to_array(img)
-        img_batch = np.expand_dims(img_tensor, axis=0)
-        augmented_img = t_g.flow(img_batch)
-        prediction=np.argmax(model.predict(augmented_img),axis=-1)
-        slno=int(f.name.split(".")[0])
-        predictions[slno//4]+=character_dictionary[prediction[0]]
+    # words=0
+    # for f in os.scandir(UPLOAD_FOLDER):
+    #     img=load_img(f.path, target_size=(128,128))
+    #     img_tensor = img_to_array(img)
+    #     img_batch = np.expand_dims(img_tensor, axis=0)
+    #     augmented_img = t_g.flow(img_batch)
+    #     prediction=np.argmax(model.predict(augmented_img),axis=-1)
+    #     slno=int(f.name.split(".")[0])
+    #     words=max(words,slno//4)
+    #     predictions[slno//4]+=character_dictionary[prediction[0]]
+    last_letter = 0
+    for i in range(count):
+        fname = os.path.join(UPLOAD_FOLDER,str(i)+'.jpg')
+        if os.path.exists(fname):
+            img=load_img(fname, target_size=(128,128))
+            img_tensor = img_to_array(img)
+            img_batch = np.expand_dims(img_tensor, axis=0)
+            augmented_img = t_g.flow(img_batch)
+            prediction=np.argmax(model.predict(augmented_img),axis=-1)
+            predictions[i//4]+=character_dictionary[prediction[0]]
+            last_letter=i//4
+    predictions=predictions[:last_letter+1]
     print(predictions)
 
-
+    for f in os.scandir(UPLOAD_FOLDER):
+        os.remove(f)
 
 
     # t_gen = t_g.flow_from_directory(os.path.join(os.path.dirname(__file__),'../..'), classes=['images'], class_mode=None, shuffle=False, target_size=(128, 128))
